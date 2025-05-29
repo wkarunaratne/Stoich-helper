@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stoichiometry Helper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.395.0/lucide.min.css" xintegrity="sha512-E3Y7GYFPJ2IAZLEINW3R2xQY6G37LPyJ6GtKCKK+2HcvJgK2pG93R37pLgWPSZ7i3S9x5qgGiJ4Y2hX/XJ43xQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .calculator-section {
+            display: none; /* Hidden by default, JS will show the active one */
+        }
+        .calculator-section.active {
+            display: block;
+        }
+        /* Lucide icons are typically used with JS, but for simplicity, we'll use their names as placeholders or use SVG strings if needed.
+           For this version, I'll try to use text or simple symbols if direct lucide class usage is complex without React.
+           Alternatively, I'll use SVG strings for key icons.
+        */
+        .lucide {
+            display: inline-block;
+            width: 1.25em;
+            height: 1.25em;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <header class="bg-slate-800 text-white shadow-md">
+        <div class="container mx-auto px-4 py-5">
+            <h1 class="text-3xl font-bold flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-beaker mr-3"><path d="M4.5 3h15"/><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"/><path d="M6 14h12"/></svg>
+                Stoichiometry Helper
+            </h1>
+            <p class="text-sm text-slate-300">Your companion for chemistry calculations.</p>
+        </div>
+    </header>
+
+    <nav class="bg-slate-700 shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-2 sm:px-4">
+            <div class="flex space-x-1 sm:space-x-2 overflow-x-auto py-1" id="nav-buttons">
+                <button data-view="molarMass" data-color="indigo" class="nav-button flex items-center px-3 py-3 text-sm sm:text-base font-medium rounded-t-md whitespace-nowrap transition-colors duration-150">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-scale"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+                    Molar Mass
+                </button>
+                <button data-view="balancer" data-color="teal" class="nav-button flex items-center px-3 py-3 text-sm sm:text-base font-medium rounded-t-md whitespace-nowrap transition-colors duration-150">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                    Balance Check
+                </button>
+                <button data-view="stoichiometry" data-color="purple" class="nav-button flex items-center px-3 py-3 text-sm sm:text-base font-medium rounded-t-md whitespace-nowrap transition-colors duration-150">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-flask-conical"><path d="M10 2v7.31"/><path d="M14 9.31V2"/><path d="M3 13a8 8 0 0 0 8 8 8 8 0 0 0 8-8V9H3v4Z"/><path d="M10 13h4"/></svg>
+                    Stoichiometry
+                </button>
+                <button data-view="limiting" data-color="orange" class="nav-button flex items-center px-3 py-3 text-sm sm:text-base font-medium rounded-t-md whitespace-nowrap transition-colors duration-150">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevrons-right"><path d="m6 17 5-5-5-5"/><path d="m13 17 5-5-5-5"/></svg>
+                    Limiting Reactant
+                </button>
+                <button data-view="percentYield" data-color="lime" class="nav-button flex items-center px-3 py-3 text-sm sm:text-base font-medium rounded-t-md whitespace-nowrap transition-colors duration-150">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-percent"><line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+                    Percent Yield
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <div id="main-content-area" class="rounded-b-lg shadow-xl">
+            <div id="molarMass" class="calculator-section p-6 bg-white rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold text-indigo-700 mb-4 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-scale"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+                    Molar Mass Calculator
+                </h2>
+                <div class="mb-4">
+                    <label for="mm_formula" class="block text-sm font-medium text-gray-700 mb-1">Chemical Formula (e.g., H2O, C6H12O6, Mg(OH)2)</label>
+                    <input type="text" id="mm_formula" value="H2O" placeholder="Enter chemical formula" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <button id="mm_calculate_button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md shadow-md transition duration-150 ease-in-out flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calculator"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><line x1="16" x2="12" y1="14" y2="14"/><line x1="12" x2="12" y1="14" y2="18"/><line x1="12" x2="8" y1="14" y2="14"/><line x1="8" x2="8" y1="14" y2="18"/><line x1="8" x2="8" y1="10" y2="10"/></svg>
+                    Calculate Molar Mass
+                </button>
+                <div id="mm_error" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md hidden items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-triangle mr-2"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                    <span id="mm_error_text"></span>
+                </div>
+                <div id="mm_result_area" class="mt-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200 hidden">
+                    <h3 class="text-xl font-semibold text-indigo-800 mb-2">
+                        Molar Mass of <span id="mm_result_formula" class="font-normal"></span>: <span id="mm_result_mass" class="font-bold"></span> g/mol
+                    </h3>
+                    <p class="text-sm text-gray-600 mb-3">Calculation Breakdown:</p>
+                    <ul id="mm_result_steps" class="space-y-1 text-sm text-gray-700"></ul>
+                </div>
+            </div>
+
+            <div id="balancer" class="calculator-section p-6 bg-white rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold text-teal-700 mb-4 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                    Equation Balancing Helper
+                </h2>
+                <p class="text-sm text-gray-600 mb-4">
+                    Enter reactants and products (e.g., <code class="bg-gray-100 p-1 rounded">2H2 + O2</code> for reactants, <code class="bg-gray-100 p-1 rounded">2H2O</code> for products).
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-11 gap-4 items-center mb-4">
+                    <div class="md:col-span-5">
+                        <label for="eb_reactants" class="block text-sm font-medium text-gray-700 mb-1">Reactants</label>
+                        <input type="text" id="eb_reactants" value="H2 + O2" placeholder="e.g., CH4 + 2O2" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                    </div>
+                    <div class="md:col-span-1 text-center text-2xl text-gray-500 font-semibold pt-6 md:pt-0">&rarr;</div>
+                    <div class="md:col-span-5">
+                        <label for="eb_products" class="block text-sm font-medium text-gray-700 mb-1">Products</label>
+                        <input type="text" id="eb_products" value="H2O" placeholder="e.g., CO2 + 2H2O" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                    </div>
+                </div>
+                <button id="eb_check_button" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-4 rounded-md shadow-md transition duration-150 ease-in-out flex items-center justify-center">Check Balance</button>
+                <div id="eb_error" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md hidden items-center">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-triangle mr-2"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                    <span id="eb_error_text"></span>
+                </div>
+                <div id="eb_status" class="mt-4 p-3 rounded-md hidden items-center font-medium">
+                    <span id="eb_status_icon_placeholder" class="mr-2"></span>
+                    <span id="eb_status_text"></span>
+                </div>
+                <div id="eb_counts_table_area" class="mt-4 overflow-x-auto"></div>
+            </div>
+
+            <div id="stoichiometry" class="calculator-section p-6 bg-white rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold text-purple-700 mb-4 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-flask-conical"><path d="M10 2v7.31"/><path d="M14 9.31V2"/><path d="M3 13a8 8 0 0 0 8 8 8 8 0 0 0 8-8V9H3v4Z"/><path d="M10 13h4"/></svg>
+                    Stoichiometry Calculator
+                </h2>
+                <div class="mb-4">
+                    <label for="sc_equation" class="block text-sm font-medium text-gray-700 mb-1">Balanced Chemical Equation (e.g., 2H2 + O2 &rarr; 2H2O)</label>
+                    <input type="text" id="sc_equation" value="2H2 + O2 -> 2H2O" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800 mb-2">Known Substance</h3>
+                        <label for="sc_known_formula" class="block text-sm font-medium text-gray-700 mb-1">Formula</label>
+                        <input type="text" id="sc_known_formula" value="H2" placeholder="e.g., H2" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm mb-2">
+                        <label for="sc_known_amount" class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                        <input type="number" id="sc_known_amount" value="2" placeholder="e.g., 2.0" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm mb-2">
+                        <label for="sc_known_unit" class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+                        <select id="sc_known_unit" class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm">
+                            <option value="g">grams (g)</option>
+                            <option value="mol">moles (mol)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800 mb-2">Target Substance</h3>
+                        <label for="sc_target_formula" class="block text-sm font-medium text-gray-700 mb-1">Formula (to calculate)</label>
+                        <input type="text" id="sc_target_formula" value="H2O" placeholder="e.g., H2O" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm">
+                    </div>
+                </div>
+                <button id="sc_calculate_button" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-md shadow-md transition duration-150 ease-in-out flex items-center justify-center">Calculate Target Amount</button>
+                <div id="sc_error" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md hidden items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-triangle mr-2"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                    <span id="sc_error_text"></span>
+                </div>
+                <div id="sc_result_area" class="mt-6 p-4 bg-purple-50 rounded-lg border border-purple-200 hidden">
+                    <h3 class="text-xl font-semibold text-purple-800 mb-2">
+                        Calculated Amount of <span id="sc_result_target_formula" class="font-normal"></span>: <span id="sc_result_amount" class="font-bold"></span> <span id="sc_result_unit"></span>
+                    </h3>
+                    <p class="text-sm text-gray-600 mb-3">Calculation Steps:</p>
+                    <ul id="sc_result_steps" class="space-y-1 text-sm text-gray-700 whitespace-pre-wrap"></ul>
+                </div>
+            </div>
+
+            <div id="limiting" class="calculator-section p-6 bg-white rounded-lg shadow-lg">
+                 <h2 class="text-2xl font-semibold text-orange-700 mb-4 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevrons-right"><path d="m6 17 5-5-5-5"/><path d="m13 17 5-5-5-5"/></svg>
+                    Limiting Reactant Calculator
+                </h2>
+                <div class="mb-4">
+                    <label for="lr_equation" class="block text-sm font-medium text-gray-700 mb-1">Balanced Chemical Equation (e.g., N2 + 3H2 &rarr; 2NH3)</label>
+                    <input type="text" id="lr_equation" value="N2 + 3H2 -> 2NH3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
+                </div>
+                <h3 class="text-lg font-medium text-gray-800 mb-2">Reactants</h3>
+                <div id="lr_reactants_container">
+                    </div>
+                <button id="lr_add_reactant_button" class="text-sm text-orange-600 hover:text-orange-800 font-medium py-1 mb-4">+ Add Reactant</button>
+                <div class="mb-4">
+                    <label for="lr_target_product" class="block text-sm font-medium text-gray-700 mb-1">Target Product Formula (for theoretical yield)</label>
+                    <input type="text" id="lr_target_product" value="NH3" placeholder="e.g., NH3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
+                </div>
+                <button id="lr_calculate_button" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded-md shadow-md transition duration-150 ease-in-out flex items-center justify-center">Calculate Limiting Reactant & Yield</button>
+                <div id="lr_error" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md hidden items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-triangle mr-2"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                    <span id="lr_error_text"></span>
+                </div>
+                <div id="lr_result_area" class="mt-6 p-4 bg-orange-50 rounded-lg border border-orange-200 hidden">
+                    <h3 class="text-xl font-semibold text-orange-800 mb-2">
+                        Limiting Reactant: <span id="lr_result_limiting_reactant" class="font-bold"></span>
+                    </h3>
+                    <p class="text-lg text-orange-700 mb-2">
+                        Theoretical Yield of <span id="lr_result_product_formula"></span>: <span id="lr_result_yield_mass" class="font-bold"></span> g (<span id="lr_result_yield_moles" class="font-bold"></span> moles)
+                    </p>
+                    <p class="text-sm text-gray-600 mb-3">Calculation Steps:</p>
+                    <ul id="lr_result_steps" class="space-y-1 text-sm text-gray-700 whitespace-pre-wrap"></ul>
+                </div>
+            </div>
+
+            <div id="percentYield" class="calculator-section p-6 bg-white rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold text-lime-700 mb-4 flex items-center">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-percent"><line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+                    Percent Yield Calculator
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                    <div>
+                        <label for="py_actual_yield" class="block text-sm font-medium text-gray-700 mb-1">Actual Yield (g)</label>
+                        <input type="number" id="py_actual_yield" placeholder="e.g., 30.5" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-lime-500 focus:border-lime-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="py_theoretical_yield" class="block text-sm font-medium text-gray-700 mb-1">Theoretical Yield (g)</label>
+                        <input type="number" id="py_theoretical_yield" placeholder="e.g., 34.0" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-lime-500 focus:border-lime-500 sm:text-sm">
+                    </div>
+                </div>
+                <button id="py_calculate_button" class="w-full bg-lime-600 hover:bg-lime-700 text-white font-semibold py-2 px-4 rounded-md shadow-md transition duration-150 ease-in-out flex items-center justify-center">Calculate Percent Yield</button>
+                <div id="py_error" class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md hidden items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-triangle mr-2"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                    <span id="py_error_text"></span>
+                </div>
+                <div id="py_result_area" class="mt-6 p-4 bg-lime-50 rounded-lg border border-lime-200 hidden">
+                    <h3 class="text-xl font-semibold text-lime-800">
+                        Percent Yield: <span id="py_result_yield" class="font-bold"></span>%
+                    </h3>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-slate-800 text-slate-400 text-center py-6 mt-12">
+        <p>&copy; <span id="current_year"></span> Stoichiometry Helper. Happy Calculating!</p>
+    </footer>
+
+    <script>
+        // --- Atomic Weights Data ---
+        const atomicWeights = {
+            H: 1.008, He: 4.0026, Li: 6.94, Be: 9.0122, B: 10.81, C: 12.011, N: 14.007, O: 15.999, F: 18.998, Ne: 20.180,
+            Na: 22.990, Mg: 24.305, Al: 26.982, Si: 28.085, P: 30.974, S: 32.06, Cl: 35.45, Ar: 39.948, K: 39.098, Ca: 40.078,
+            Sc: 44.956, Ti: 47.867, V: 50.942, Cr: 51.996, Mn: 54.938, Fe: 55.845, Co: 58.933, Ni: 58.693, Cu: 63.546, Zn: 65.38,
+            Ga: 69.723, Ge: 72.630, As: 74.922, Se: 78.971, Br: 79.904, Kr: 83.798, Rb: 85.468, Sr: 87.62, Y: 88.906, Zr: 91.224,
+            Nb: 92.906, Mo: 95.96, Tc: 98, Ru: 101.07, Rh: 102.91, Pd: 106.42, Ag: 107.87, Cd: 112.41, In: 114.82, Sn: 118.71,
+            Sb: 121.76, Te: 127.60, I: 126.90, Xe: 131.29, Cs: 132.91, Ba: 137.33, La: 138.91, Ce: 140.12, Pr: 140.91, Nd: 144.24,
+            Pm: 145, Sm: 150.36, Eu: 151.96, Gd: 157.25, Tb: 158.93, Dy: 162.50, Ho: 164.93, Er: 167.26, Tm: 168.93, Yb: 173.05,
+            Lu: 174.97, Hf: 178.49, Ta: 180.95, W: 183.84, Re: 186.21, Os: 190.23, Ir: 192.22, Pt: 195.08, Au: 196.97, Hg: 200.59,
+            Tl: 204.38, Pb: 207.2, Bi: 208.98, Po: 209, At: 210, Rn: 222, Fr: 223, Ra: 226, Ac: 227, Th: 232.04, Pa: 231.04, U: 238.03
+        };
+
+        // --- Formula Parsing Logic (Reused from React version) ---
+        function parseFormula(formula) {
+            // ... (Keep the exact same parseFormula logic from the React version here)
+            // This function is quite long, so for brevity in this thought block,
+            // I'm indicating it should be copied verbatim.
+            // It should return elementCounts object or throw an error.
+            const elementCounts = {};
+            let i = 0;
+
+            function getElementAndCount(str, startIndex) {
+                let element = '';
+                let count = '';
+                let k = startIndex;
+
+                if (k < str.length && str[k] >= 'A' && str[k] <= 'Z') {
+                    element += str[k];
+                    k++;
+                    if (k < str.length && str[k] >= 'a' && str[k] <= 'z') {
+                        element += str[k];
+                        k++;
+                    }
+                } else {
+                    return null; 
+                }
+
+                while (k < str.length && str[k] >= '0' && str[k] <= '9') {
+                    count += str[k];
+                    k++;
+                }
+                return { element, count: count ? parseInt(count) : 1, length: k - startIndex };
+            }
+
+            while (i < formula.length) {
+                if (formula[i] === '(') {
+                    let j = i + 1;
+                    let balance = 1;
+                    let subFormula = '';
+                    while (j < formula.length && balance > 0) {
+                        if (formula[j] === '(') balance++;
+                        if (formula[j] === ')') balance--;
+                        if (balance > 0) subFormula += formula[j];
+                        j++;
+                    }
+
+                    if (balance !== 0) throw new Error("Mismatched parentheses in formula.");
+
+                    let groupMultiplier = '';
+                    let k = j;
+                    while (k < formula.length && formula[k] >= '0' && formula[k] <= '9') {
+                        groupMultiplier += formula[k];
+                        k++;
+                    }
+                    const multiplier = groupMultiplier ? parseInt(groupMultiplier) : 1;
+                    
+                    const subCounts = parseFormula(subFormula); // Recursive call
+                    for (const el in subCounts) {
+                        if (!atomicWeights[el]) { // Check element validity within sub-formula
+                             throw new Error(`Unknown element in sub-formula: ${el}`);
+                        }
+                        elementCounts[el] = (elementCounts[el] || 0) + subCounts[el] * multiplier;
+                    }
+                    i = k;
+                } else {
+                    const part = getElementAndCount(formula, i);
+                    if (part) {
+                        if (!atomicWeights[part.element]) {
+                            throw new Error(`Unknown element: ${part.element}`);
+                        }
+                        elementCounts[part.element] = (elementCounts[part.element] || 0) + part.count;
+                        i += part.length;
+                    } else {
+                         throw new Error(`Invalid character or format at position ${i} in formula "${formula}"`);
+                    }
+                }
+            }
+            return elementCounts;
+        }
+
+
+        // --- DOM Elements ---
+        // Navigation
+        const navButtonsContainer = document.getElementById('nav-buttons');
+        const navButtons = document.querySelectorAll('.nav-button');
+        const calculatorSections = document.querySelectorAll('.calculator-section');
+        const mainContentArea = document.getElementById('main-content-area');
+
+        // Molar Mass
+        const mmFormulaInput = document.getElementById('mm_formula');
+        const mmCalculateButton = document.getElementById('mm_calculate_button');
+        const mmErrorDiv = document.getElementById('mm_error');
+        const mmErrorText = document.getElementById('mm_error_text');
+        const mmResultArea = document.getElementById('mm_result_area');
+        const mmResultFormula = document.getElementById('mm_result_formula');
+        const mmResultMass = document.getElementById('mm_result_mass');
+        const mmResultSteps = document.getElementById('mm_result_steps');
+
+        // Equation Balancer
+        const ebReactantsInput = document.getElementById('eb_reactants');
+        const ebProductsInput = document.getElementById('eb_products');
+        const ebCheckButton = document.getElementById('eb_check_button');
+        const ebErrorDiv = document.getElementById('eb_error');
+        const ebErrorText = document.getElementById('eb_error_text');
+        const ebStatusDiv = document.getElementById('eb_status');
+        const ebStatusIconPlaceholder = document.getElementById('eb_status_icon_placeholder');
+        const ebStatusText = document.getElementById('eb_status_text');
+        const ebCountsTableArea = document.getElementById('eb_counts_table_area');
+
+        // Stoichiometry Calculator
+        const scEquationInput = document.getElementById('sc_equation');
+        const scKnownFormulaInput = document.getElementById('sc_known_formula');
+        const scKnownAmountInput = document.getElementById('sc_known_amount');
+        const scKnownUnitSelect = document.getElementById('sc_known_unit');
+        const scTargetFormulaInput = document.getElementById('sc_target_formula');
+        const scCalculateButton = document.getElementById('sc_calculate_button');
+        const scErrorDiv = document.getElementById('sc_error');
+        const scErrorText = document.getElementById('sc_error_text');
+        const scResultArea = document.getElementById('sc_result_area');
+        const scResultTargetFormula = document.getElementById('sc_result_target_formula');
+        const scResultAmount = document.getElementById('sc_result_amount');
+        const scResultUnit = document.getElementById('sc_result_unit');
+        const scResultSteps = document.getElementById('sc_result_steps');
+        
+        // Limiting Reactant
+        const lrEquationInput = document.getElementById('lr_equation');
+        const lrReactantsContainer = document.getElementById('lr_reactants_container');
+        const lrAddReactantButton = document.getElementById('lr_add_reactant_button');
+        const lrTargetProductInput = document.getElementById('lr_target_product');
+        const lrCalculateButton = document.getElementById('lr_calculate_button');
+        const lrErrorDiv = document.getElementById('lr_error');
+        const lrErrorText = document.getElementById('lr_error_text');
+        const lrResultArea = document.getElementById('lr_result_area');
+        const lrResultLimitingReactant = document.getElementById('lr_result_limiting_reactant');
+        const lrResultProductFormula = document.getElementById('lr_result_product_formula');
+        const lrResultYieldMass = document.getElementById('lr_result_yield_mass');
+        const lrResultYieldMoles = document.getElementById('lr_result_yield_moles');
+        const lrResultSteps = document.getElementById('lr_result_steps');
+
+        // Percent Yield
+        const pyActualYieldInput = document.getElementById('py_actual_yield');
+        const pyTheoreticalYieldInput = document.getElementById('py_theoretical_yield');
+        const pyCalculateButton = document.getElementById('py_calculate_button');
+        const pyErrorDiv = document.getElementById('py_error');
+        const pyErrorText = document.getElementById('py_error_text');
+        const pyResultArea = document.getElementById('py_result_area');
+        const pyResultYield = document.getElementById('py_result_yield');
+
+
+        // --- Helper Functions ---
+        function displayError(div, textElement, message) {
+            textElement.textContent = message;
+            div.style.display = 'flex'; // Show error
+        }
+
+        function clearError(div) {
+            div.style.display = 'none'; // Hide error
+        }
+
+        function getMolarMass(formulaStr) {
+            // Simplified internal molar mass calculation, returns mass or throws error
+            const counts = parseFormula(formulaStr);
+            let totalMass = 0;
+            for (const element in counts) {
+                if (atomicWeights[element]) {
+                    totalMass += atomicWeights[element] * counts[element];
+                } else {
+                    throw new Error(`Atomic weight not found for element: ${element}`);
+                }
+            }
+            return totalMass;
+        }
+        
+        const alertTriangleSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-triangle mr-2"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`;
+        const checkCircleSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle-2 mr-2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>`;
+        const xCircleSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-circle mr-2"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>`;
+
+
+        // --- Molar Mass Calculator Logic ---
+        function calculateMolarMass() {
+            clearError(mmErrorDiv);
+            mmResultArea.style.display = 'none';
+            const formula = mmFormulaInput.value.trim();
+
+            if (!formula) {
+                displayError(mmErrorDiv, mmErrorText, 'Please enter a chemical formula.');
+                return;
+            }
+
+            try {
+                const counts = parseFormula(formula);
+                let totalMass = 0;
+                const stepsHtml = [];
+                for (const element in counts) {
+                    if (atomicWeights[element]) {
+                        const mass = atomicWeights[element] * counts[element];
+                        totalMass += mass;
+                        stepsHtml.push(`<li>${element}: ${counts[element]} × ${atomicWeights[element].toFixed(3)} g/mol = ${mass.toFixed(3)} g/mol</li>`);
+                    } else {
+                        throw new Error(`Atomic weight not found for element: ${element}`);
+                    }
+                }
+                mmResultFormula.textContent = formula;
+                mmResultMass.textContent = totalMass.toFixed(3);
+                mmResultSteps.innerHTML = stepsHtml.join('');
+                mmResultArea.style.display = 'block';
+            } catch (e) {
+                displayError(mmErrorDiv, mmErrorText, `Error: ${e.message}`);
+            }
+        }
+        mmCalculateButton.addEventListener('click', calculateMolarMass);
+
+        // --- Equation Balancer Logic ---
+        function parseEquationSide(sideStr) {
+            const terms = sideStr.split('+').map(s => s.trim()).filter(s => s);
+            const elementTotals = {};
+            for (const term of terms) {
+                let coefficient = 1;
+                let formula = term;
+                const matchCoeff = term.match(/^(\d+)\s*([A-Za-z0-9()]+)$/);
+                if (matchCoeff) {
+                    coefficient = parseInt(matchCoeff[1]);
+                    formula = matchCoeff[2];
+                } else if (!term.match(/^[A-Za-z0-9()]+$/)) {
+                    if (term.match(/^\d+$/)) {
+                         throw new Error(`Invalid term: "${term}". Coefficients must be followed by a formula.`);
+                    }
+                }
+                const counts = parseFormula(formula);
+                for (const el in counts) {
+                    elementTotals[el] = (elementTotals[el] || 0) + counts[el] * coefficient;
+                }
+            }
+            return elementTotals;
+        }
+
+        function checkEquationBalance() {
+            clearError(ebErrorDiv);
+            ebStatusDiv.style.display = 'none';
+            ebCountsTableArea.innerHTML = '';
+
+            const reactantsStr = ebReactantsInput.value.trim();
+            const productsStr = ebProductsInput.value.trim();
+
+            if (!reactantsStr || !productsStr) {
+                displayError(ebErrorDiv, ebErrorText, "Reactants and products fields cannot be empty.");
+                return;
+            }
+
+            try {
+                const reactantCounts = parseEquationSide(reactantsStr);
+                const productCounts = parseEquationSide(productsStr);
+                
+                const allElements = new Set([...Object.keys(reactantCounts), ...Object.keys(productCounts)]);
+                let isBalanced = true;
+
+                if (allElements.size === 0 && (reactantsStr || productsStr)) {
+                    displayError(ebErrorDiv, ebErrorText, "Could not parse elements. Check formula syntax.");
+                    return;
+                } else if (allElements.size === 0) {
+                     displayError(ebErrorDiv, ebErrorText, "Please enter chemical formulas.");
+                    return;
+                }
+
+
+                let tableHtml = `<h4 class="text-md font-semibold text-gray-700 mb-2">Atom Counts:</h4>
+                                 <table class="min-w-full divide-y divide-gray-200 border border-gray-300 rounded-md">
+                                     <thead class="bg-gray-50">
+                                         <tr>
+                                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Element</th>
+                                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reactants</th>
+                                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Products</th>
+                                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balanced?</th>
+                                         </tr>
+                                     </thead>
+                                     <tbody class="bg-white divide-y divide-gray-200">`;
+
+                Array.from(allElements).sort().forEach(el => {
+                    const rCount = reactantCounts[el] || 0;
+                    const pCount = productCounts[el] || 0;
+                    const elBalanced = rCount === pCount;
+                    if (!elBalanced) isBalanced = false;
+                    tableHtml += `<tr class="${elBalanced ? 'bg-green-50' : 'bg-red-50'}">
+                                      <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">${el}</td>
+                                      <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">${rCount}</td>
+                                      <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">${pCount}</td>
+                                      <td class="px-4 py-2 whitespace-nowrap text-sm">${elBalanced ? checkCircleSVG : xCircleSVG}</td>
+                                  </tr>`;
+                });
+                tableHtml += `</tbody></table>`;
+                ebCountsTableArea.innerHTML = tableHtml;
+
+                ebStatusDiv.className = `mt-4 p-3 rounded-md flex items-center font-medium ${isBalanced ? 'bg-green-100 border border-green-400 text-green-700' : 'bg-red-100 border border-red-400 text-red-700'}`;
+                ebStatusIconPlaceholder.innerHTML = isBalanced ? checkCircleSVG : xCircleSVG;
+                ebStatusText.textContent = `Equation is ${isBalanced ? 'BALANCED' : 'NOT BALANCED'}`;
+                ebStatusDiv.style.display = 'flex';
+
+            } catch (e) {
+                displayError(ebErrorDiv, ebErrorText, `Error parsing equation: ${e.message}`);
+            }
+        }
+        ebCheckButton.addEventListener('click', checkEquationBalance);
+
+        // --- Stoichiometry Calculator Logic ---
+        function parseBalancedEquationForStoich(eqStr) {
+            const parts = eqStr.split('->').map(s => s.trim());
+            if (parts.length !== 2) throw new Error("Equation must contain '->' separating reactants and products.");
+            
+            const parseSideCoeffs = (sideStr) => {
+                const terms = sideStr.split('+').map(s => s.trim());
+                const coeffs = {};
+                for (const term of terms) {
+                    let coefficient = 1;
+                    let formula = term;
+                    const match = term.match(/^(\d*)\s*([A-Za-z0-9()]+)$/);
+                    if (match) {
+                        coefficient = match[1] ? parseInt(match[1]) : 1;
+                        formula = match[2];
+                    } else if (!term.match(/^[A-Za-z0-9()]+$/)) {
+                        throw new Error(`Invalid term format in equation: "${term}".`);
+                    }
+                    if (!formula) throw new Error(`Could not parse formula from term: "${term}"`);
+                    coeffs[formula] = coefficient;
+                }
+                return coeffs;
+            };
+            
+            const reactantCoeffs = parseSideCoeffs(parts[0]);
+            const productCoeffs = parseSideCoeffs(parts[1]);
+            return { reactants: reactantCoeffs, products: productCoeffs };
+        }
+
+        function calculateStoichiometry() {
+            clearError(scErrorDiv);
+            scResultArea.style.display = 'none';
+            const equation = scEquationInput.value.trim();
+            const knownFormula = scKnownFormulaInput.value.trim();
+            const knownAmountStr = scKnownAmountInput.value.trim();
+            const knownUnit = scKnownUnitSelect.value;
+            const targetFormula = scTargetFormulaInput.value.trim();
+
+            if (!equation || !knownFormula || !targetFormula || !knownAmountStr) {
+                displayError(scErrorDiv, scErrorText, "Please fill all required fields.");
+                return;
+            }
+            const knownAmount = parseFloat(knownAmountStr);
+            if (isNaN(knownAmount) || knownAmount <= 0) {
+                displayError(scErrorDiv, scErrorText, "Amount of known substance must be a positive number.");
+                return;
+            }
+
+            try {
+                const { reactants, products } = parseBalancedEquationForStoich(equation);
+                const allSubstances = { ...reactants, ...products };
+
+                if (!allSubstances[knownFormula]) throw new Error(`Known substance "${knownFormula}" not found in equation.`);
+                if (!targetFormula || !allSubstances[targetFormula]) throw new Error(`Target substance "${targetFormula}" not found or invalid in equation.`);
+
+                const knownCoeff = allSubstances[knownFormula];
+                const targetCoeff = allSubstances[targetFormula];
+
+                const knownMolarMass = getMolarMass(knownFormula);
+                const targetMolarMass = getMolarMass(targetFormula);
+                
+                let steps = [];
+                let molesKnown;
+                if (knownUnit === 'g') {
+                    molesKnown = knownAmount / knownMolarMass;
+                    steps.push(`1. Moles of ${knownFormula} = ${knownAmount} g / ${knownMolarMass.toFixed(3)} g/mol = ${molesKnown.toFixed(4)} mol`);
+                } else {
+                    molesKnown = knownAmount;
+                    steps.push(`1. Moles of ${knownFormula} = ${molesKnown.toFixed(4)} mol (given)`);
+                }
+
+                const molesTarget = (molesKnown / knownCoeff) * targetCoeff;
+                steps.push(`2. Mole ratio: (${targetCoeff} mol ${targetFormula} / ${knownCoeff} mol ${knownFormula})`);
+                steps.push(`   Moles of ${targetFormula} = ${molesKnown.toFixed(4)} mol ${knownFormula} * (${targetCoeff} / ${knownCoeff}) = ${molesTarget.toFixed(4)} mol`);
+                
+                const massTarget = molesTarget * targetMolarMass;
+                steps.push(`3. Mass of ${targetFormula} = ${molesTarget.toFixed(4)} mol * ${targetMolarMass.toFixed(3)} g/mol = ${massTarget.toFixed(3)} g`);
+                
+                scResultTargetFormula.textContent = targetFormula;
+                scResultAmount.textContent = massTarget.toFixed(3);
+                scResultUnit.textContent = 'g';
+                scResultSteps.innerHTML = steps.map(s => `<li>${s}</li>`).join('');
+                scResultArea.style.display = 'block';
+
+            } catch (e) {
+                displayError(scErrorDiv, scErrorText, `Calculation Error: ${e.message}`);
+            }
+        }
+        scCalculateButton.addEventListener('click', calculateStoichiometry);
+
+        // --- Limiting Reactant Logic ---
+        let reactantCount = 0;
+        function addReactantInput(formula = '', amount = '', unit = 'g') {
+            if (reactantCount >= 5) {
+                lrAddReactantButton.disabled = true;
+                return;
+            }
+            reactantCount++;
+            const reactantId = `lr_reactant_${reactantCount}`;
+            const div = document.createElement('div');
+            div.className = "grid grid-cols-1 md:grid-cols-12 gap-2 mb-3 p-3 border border-gray-200 rounded-md relative";
+            div.innerHTML = `
+                <div class="md:col-span-4">
+                    <label for="${reactantId}_formula" class="block text-xs font-medium text-gray-600">Formula</label>
+                    <input type="text" id="${reactantId}_formula" value="${formula}" placeholder="e.g., N2" class="reactant-formula mt-1 block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm text-sm focus:ring-orange-500 focus:border-orange-500">
+                </div>
+                <div class="md:col-span-3">
+                    <label for="${reactantId}_amount" class="block text-xs font-medium text-gray-600">Amount</label>
+                    <input type="number" id="${reactantId}_amount" value="${amount}" placeholder="e.g., 28" class="reactant-amount mt-1 block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm text-sm focus:ring-orange-500 focus:border-orange-500">
+                </div>
+                <div class="md:col-span-3">
+                    <label for="${reactantId}_unit" class="block text-xs font-medium text-gray-600">Unit</label>
+                    <select id="${reactantId}_unit" class="reactant-unit mt-1 block w-full px-2 py-1 border border-gray-300 bg-white rounded-md shadow-sm text-sm focus:ring-orange-500 focus:border-orange-500">
+                        <option value="g" ${unit === 'g' ? 'selected' : ''}>grams (g)</option>
+                        <option value="mol" ${unit === 'mol' ? 'selected' : ''}>moles (mol)</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2 flex items-end">
+                    ${reactantCount > 1 ? `<button onclick="removeReactantInput(this.parentElement.parentElement)" class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-circle"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></button>` : ''}
+                </div>
+            `;
+            lrReactantsContainer.appendChild(div);
+            lrAddReactantButton.disabled = reactantCount >= 5;
+        }
+
+        function removeReactantInput(reactantDiv) {
+            lrReactantsContainer.removeChild(reactantDiv);
+            reactantCount--;
+            lrAddReactantButton.disabled = reactantCount >= 5;
+            if (reactantCount < 2) { // Ensure remaining remove buttons are updated if only one reactant left
+                const firstReactant = lrReactantsContainer.querySelector('.grid');
+                if (firstReactant) {
+                    const removeButtonContainer = firstReactant.children[3];
+                    if (removeButtonContainer) removeButtonContainer.innerHTML = ''; // Remove the button
+                }
+            }
+        }
+        lrAddReactantButton.addEventListener('click', () => addReactantInput());
+        
+        function calculateLimitingReactant() {
+            clearError(lrErrorDiv);
+            lrResultArea.style.display = 'none';
+            const equation = lrEquationInput.value.trim();
+            const targetProductFormula = lrTargetProductInput.value.trim();
+            const reactantElements = lrReactantsContainer.children;
+            const reactantsData = [];
+
+            if (!equation) {
+                displayError(lrErrorDiv, lrErrorText, "Balanced chemical equation is required.");
+                return;
+            }
+            if (!targetProductFormula) {
+                displayError(lrErrorDiv, lrErrorText, "Target product formula is required.");
+                return;
+            }
+
+            for (let i = 0; i < reactantElements.length; i++) {
+                const idBase = `lr_reactant_${i+1}`; // Assuming IDs are 1-indexed if created that way
+                // Need to find elements by class or more robustly if IDs aren't perfectly sequential
+                const formulaInput = reactantElements[i].querySelector('.reactant-formula');
+                const amountInput = reactantElements[i].querySelector('.reactant-amount');
+                const unitSelect = reactantElements[i].querySelector('.reactant-unit');
+
+                if (!formulaInput || !amountInput || !unitSelect) continue; // Should not happen
+
+                const formula = formulaInput.value.trim();
+                const amountStr = amountInput.value.trim();
+                const unit = unitSelect.value;
+                const amount = parseFloat(amountStr);
+
+                if (!formula || !amountStr || isNaN(amount) || amount <= 0) {
+                    displayError(lrErrorDiv, lrErrorText, "All reactants must have a valid formula and positive amount.");
+                    return;
+                }
+                reactantsData.push({ formula, amount, unit });
+            }
+            if (reactantsData.length === 0) {
+                 displayError(lrErrorDiv, lrErrorText, "Please add at least one reactant.");
+                return;
+            }
+
+
+            try {
+                const parsedEq = parseBalancedEquationForStoich(equation);
+                const productCoeff = parsedEq.products[targetProductFormula];
+                if (!productCoeff) throw new Error(`Target product "${targetProductFormula}" not found in equation.`);
+
+                const targetProductMolarMass = getMolarMass(targetProductFormula);
+                let minMolesProduct = Infinity;
+                let limitingReactantFormula = '';
+                let localSteps = ["Calculating moles of product each reactant can produce:"];
+
+                for (const reactant of reactantsData) {
+                    const reactantCoeff = parsedEq.reactants[reactant.formula];
+                    if (!reactantCoeff) throw new Error(`Reactant "${reactant.formula}" not found in equation.`);
+                    
+                    const reactantMolarMass = getMolarMass(reactant.formula);
+                    let molesReactant;
+                    if (reactant.unit === 'g') {
+                        molesReactant = reactant.amount / reactantMolarMass;
+                        localSteps.push(`  For ${reactant.formula}: ${reactant.amount}g / ${reactantMolarMass.toFixed(3)} g/mol = ${molesReactant.toFixed(4)} mol ${reactant.formula}`);
+                    } else {
+                        molesReactant = reactant.amount;
+                        localSteps.push(`  For ${reactant.formula}: ${molesReactant.toFixed(4)} mol ${reactant.formula} (given)`);
+                    }
+                    
+                    const molesProductFromThisReactant = (molesReactant / reactantCoeff) * productCoeff;
+                    localSteps.push(`    Moles of ${targetProductFormula} possible = (${molesReactant.toFixed(4)} mol ${reactant.formula} / ${reactantCoeff} mol ${reactant.formula}) * ${productCoeff} mol ${targetProductFormula} = ${molesProductFromThisReactant.toFixed(4)} mol ${targetProductFormula}`);
+
+                    if (molesProductFromThisReactant < minMolesProduct) {
+                        minMolesProduct = molesProductFromThisReactant;
+                        limitingReactantFormula = reactant.formula;
+                    }
+                }
+
+                if (!limitingReactantFormula) throw new Error("Could not determine limiting reactant.");
+                
+                const theoreticalYieldMass = minMolesProduct * targetProductMolarMass;
+                localSteps.push(`\nLimiting reactant is ${limitingReactantFormula} (produces least ${targetProductFormula}: ${minMolesProduct.toFixed(4)} moles).`);
+                localSteps.push(`Theoretical yield of ${targetProductFormula} = ${minMolesProduct.toFixed(4)} mol * ${targetProductMolarMass.toFixed(3)} g/mol = ${theoreticalYieldMass.toFixed(3)} g.`);
+
+                lrResultLimitingReactant.textContent = limitingReactantFormula;
+                lrResultProductFormula.textContent = targetProductFormula;
+                lrResultYieldMass.textContent = theoreticalYieldMass.toFixed(3);
+                lrResultYieldMoles.textContent = minMolesProduct.toFixed(4);
+                lrResultSteps.innerHTML = localSteps.map(s => `<li>${s}</li>`).join('');
+                lrResultArea.style.display = 'block';
+
+            } catch (e) {
+                displayError(lrErrorDiv, lrErrorText, `Calculation Error: ${e.message}`);
+            }
+        }
+        lrCalculateButton.addEventListener('click', calculateLimitingReactant);
+
+
+        // --- Percent Yield Calculator Logic ---
+        function calculatePercentYield() {
+            clearError(pyErrorDiv);
+            pyResultArea.style.display = 'none';
+            const actualStr = pyActualYieldInput.value.trim();
+            const theoreticalStr = pyTheoreticalYieldInput.value.trim();
+
+            if (!actualStr || !theoreticalStr) {
+                displayError(pyErrorDiv, pyErrorText, "Please enter both actual and theoretical yields.");
+                return;
+            }
+            const actual = parseFloat(actualStr);
+            const theoretical = parseFloat(theoreticalStr);
+
+            if (isNaN(actual) || isNaN(theoretical)) {
+                displayError(pyErrorDiv, pyErrorText, "Yields must be numbers.");
+                return;
+            }
+            if (theoretical <= 0) {
+                displayError(pyErrorDiv, pyErrorText, "Theoretical yield must be positive.");
+                return;
+            }
+            if (actual < 0) {
+                displayError(pyErrorDiv, pyErrorText, "Actual yield cannot be negative.");
+                return;
+            }
+
+            const percentYield = (actual / theoretical) * 100;
+            pyResultYield.textContent = percentYield.toFixed(2);
+            pyResultArea.style.display = 'block';
+        }
+        pyCalculateButton.addEventListener('click', calculatePercentYield);
+
+
+        // --- Navigation Logic ---
+        function setActiveView(viewId, buttonColor) {
+            calculatorSections.forEach(section => {
+                section.classList.remove('active');
+                if (section.id === viewId) {
+                    section.classList.add('active');
+                }
+            });
+            navButtons.forEach(btn => {
+                btn.classList.remove(`bg-${btn.dataset.color}-600`, 'text-white', 'shadow-inner');
+                btn.classList.add('text-gray-200', `hover:bg-slate-600`, `hover:text-white`);
+                if (btn.dataset.view === viewId) {
+                    btn.classList.add(`bg-${buttonColor}-600`, 'text-white', 'shadow-inner');
+                    btn.classList.remove('text-gray-200', `hover:bg-slate-600`);
+                }
+            });
+            // Update border color of main content area
+            mainContentArea.className = `border-t-4 border-${buttonColor}-600 rounded-b-lg shadow-xl`;
+        }
+
+        navButtonsContainer.addEventListener('click', (event) => {
+            const button = event.target.closest('.nav-button');
+            if (button) {
+                setActiveView(button.dataset.view, button.dataset.color);
+            }
+        });
+
+        // --- Initial Setup ---
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('current_year').textContent = new Date().getFullYear();
+            setActiveView('molarMass', 'indigo'); // Default view
+            calculateMolarMass(); // Initial calculation for default formula
+            checkEquationBalance(); // Initial balance check for default equation
+            calculateStoichiometry(); // Initial calculation for default values
+            addReactantInput('N2', '28', 'g'); // Initial reactants for Limiting Reactant
+            addReactantInput('H2', '3', 'g');
+            calculateLimitingReactant();
+            // Percent yield doesn't need initial calculation unless inputs are pre-filled
+        });
+
+    </script>
+</body>
+</html>
